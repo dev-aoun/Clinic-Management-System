@@ -1,0 +1,45 @@
+# ============================================================
+# Python / FastAPI
+# ============================================================
+
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.env
+*.pyc
+
+# ============================================================
+# Flutter
+# ============================================================
+
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+
+# ============================================================
+# Android
+# ============================================================
+
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
+# ============================================================
+# IDE
+# ============================================================
+
+.idea/
+.vscode/
+
+# ============================================================
+# OS
+# ============================================================
+
+.DS_Store
+Thumbs.db
