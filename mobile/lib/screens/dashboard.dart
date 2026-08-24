@@ -10,10 +10,6 @@ import 'appointments.dart';
 import 'add_appointment.dart';
 import '../main.dart';
 
-/// CarePoint Clinical Dashboard
-///
-/// Refactored with responsive breakpoints, high-contrast clinical design tokens,
-/// explicit accessibility semantics, fast O(1) in-memory lookups, and modular widget components.
 class Dashboard extends StatefulWidget {
   final String token;
   final Future<void> Function(ThemeMode mode)? onThemeChanged;
@@ -31,15 +27,10 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  // ============================================================
-  // DATA STATE
-  // ============================================================
-
   List<dynamic> _patients = [];
   List<dynamic> _doctors = [];
   List<dynamic> _appointments = [];
 
-  // Fast O(1) in-memory lookup maps to eliminate linear build scans
   Map<String, String> _patientNameMap = {};
   Map<String, String> _doctorNameMap = {};
   Map<String, String> _doctorSpecMap = {};
@@ -54,10 +45,6 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
     _loadDashboard();
   }
-
-  // ============================================================
-  // API INTEGRATIONS & SYNCHRONIZATION
-  // ============================================================
 
   Future<void> _loadDashboard({bool refreshing = false}) async {
     if (!mounted) return;
@@ -84,7 +71,6 @@ class _DashboardState extends State<Dashboard> {
       final fetchedDoctors = List<dynamic>.from(results[1]);
       final fetchedAppointments = List<dynamic>.from(results[2]);
 
-      // Precompute lookup tables once on data arrival
       final pMap = <String, String>{};
       for (final p in fetchedPatients) {
         final id = p['id']?.toString();
@@ -103,7 +89,6 @@ class _DashboardState extends State<Dashboard> {
         }
       }
 
-      // Filter and sort today's schedule once
       final todayList = fetchedAppointments.where(_isToday).toList()
         ..sort((a, b) {
           final timeA = a['appointment_time']?.toString() ?? '';
@@ -139,10 +124,6 @@ class _DashboardState extends State<Dashboard> {
     await _loadDashboard(refreshing: true);
   }
 
-  // ============================================================
-  // THEME SELECTOR DIALOG
-  // ============================================================
-
   void _showThemeSelectorDialog() {
     showDialog(
       context: context,
@@ -159,21 +140,21 @@ class _DashboardState extends State<Dashboard> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildThemeChoiceTile(
-                context,
+                dialogContext,
                 title: 'Light Mode',
                 icon: Icons.light_mode_rounded,
                 mode: ThemeMode.light,
               ),
               const SizedBox(height: 6),
               _buildThemeChoiceTile(
-                context,
+                dialogContext,
                 title: 'Dark Mode',
                 icon: Icons.dark_mode_rounded,
                 mode: ThemeMode.dark,
               ),
               const SizedBox(height: 6),
               _buildThemeChoiceTile(
-                context,
+                dialogContext,
                 title: 'System Default',
                 icon: Icons.brightness_auto_rounded,
                 mode: ThemeMode.system,
@@ -186,13 +167,13 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildThemeChoiceTile(
-    BuildContext context, {
+    BuildContext dialogContext, {
     required String title,
     required IconData icon,
     required ThemeMode mode,
   }) {
     final isSelected = widget.currentThemeMode == mode;
-    final primary = Theme.of(context).colorScheme.primary;
+    final primary = Theme.of(dialogContext).colorScheme.primary;
 
     return Material(
       color: isSelected ? primary.withValues(alpha: 0.1) : Colors.transparent,
@@ -200,7 +181,7 @@ class _DashboardState extends State<Dashboard> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          Navigator.of(context).pop();
+          Navigator.of(dialogContext).pop();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             widget.onThemeChanged?.call(mode);
           });
@@ -228,10 +209,6 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
-  // ============================================================
-  // DATE / TIME PARSING & FILTERING
-  // ============================================================
 
   DateTime? _parseAppointmentDate(dynamic value) {
     if (value == null) return null;
@@ -286,10 +263,6 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-  // ============================================================
-  // O(1) CONSTANT TIME LOOKUPS
-  // ============================================================
-
   String _getPatientName(dynamic appointment) {
     final patientId = appointment['patient_id']?.toString();
     if (patientId == null) return 'Unknown Patient';
@@ -307,10 +280,6 @@ class _DashboardState extends State<Dashboard> {
     if (doctorId == null) return '';
     return _doctorSpecMap[doctorId] ?? '';
   }
-
-  // ============================================================
-  // STATUS BADGE FORMATTING
-  // ============================================================
 
   String _statusLabel(String status) {
     switch (status.toLowerCase().trim()) {
@@ -354,10 +323,6 @@ class _DashboardState extends State<Dashboard> {
     final color = _statusColor(status, primaryColor);
     return color.withValues(alpha: isDark ? 0.16 : 0.09);
   }
-
-  // ============================================================
-  // MAIN BUILD VIEW
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -430,10 +395,6 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
-  // ============================================================
-  // APP BAR (CLEAN & NON-OVERFLOWING)
-  // ============================================================
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final theme = Theme.of(context);
@@ -564,10 +525,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  // ============================================================
-  // STATISTICAL METRICS SECTION
-  // ============================================================
-
   Widget _buildStatisticsGrid(double width) {
     final items = [
       _StatData(
@@ -647,10 +604,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  // ============================================================
-  // QUICK ACTIONS SECTION
-  // ============================================================
-
   Widget _buildQuickActionsCard(bool isMobile) {
     return _ClinicalSectionContainer(
       title: 'Quick Operations',
@@ -672,6 +625,7 @@ class _DashboardState extends State<Dashboard> {
                   icon: Icons.person_add_alt_1_rounded,
                   title: 'Register Patient',
                   subtitle: 'Create record',
+                  accentColor: const Color(0xFF0284C7),
                   onPressed: _openAddPatient,
                 ),
               ),
@@ -681,6 +635,7 @@ class _DashboardState extends State<Dashboard> {
                   icon: Icons.medical_services_outlined,
                   title: 'Add Doctor',
                   subtitle: 'Onboard specialist',
+                  accentColor: const Color(0xFF0D9488),
                   onPressed: _openAddDoctor,
                 ),
               ),
@@ -690,6 +645,7 @@ class _DashboardState extends State<Dashboard> {
                   icon: Icons.calendar_month_rounded,
                   title: 'Book Appointment',
                   subtitle: 'Schedule visit',
+                  accentColor: const Color(0xFF6366F1),
                   onPressed: _openAddAppointment,
                 ),
               ),
@@ -699,6 +655,7 @@ class _DashboardState extends State<Dashboard> {
                   icon: Icons.people_outline_rounded,
                   title: 'View Patients',
                   subtitle: 'Browse index',
+                  accentColor: const Color(0xFF06B6D4),
                   onPressed: _openPatients,
                 ),
               ),
@@ -708,6 +665,7 @@ class _DashboardState extends State<Dashboard> {
                   icon: Icons.medical_information_outlined,
                   title: 'View Doctors',
                   subtitle: 'Staff roster',
+                  accentColor: const Color(0xFF10B981),
                   onPressed: _openDoctors,
                 ),
               ),
@@ -717,6 +675,7 @@ class _DashboardState extends State<Dashboard> {
                   icon: Icons.event_note_outlined,
                   title: 'View Appointments',
                   subtitle: 'Consultation log',
+                  accentColor: const Color(0xFF8B5CF6),
                   onPressed: _openAppointments,
                 ),
               ),
@@ -726,10 +685,6 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
-  // ============================================================
-  // SCHEDULE SECTION
-  // ============================================================
 
   Widget _buildScheduleSection(
     BuildContext context,
@@ -790,10 +745,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  // ============================================================
-  // SYSTEM OVERVIEW SECTION
-  // ============================================================
-
   Widget _buildSystemOverviewCard(double width) {
     final items = [
       _OverviewMetric(
@@ -801,18 +752,21 @@ class _DashboardState extends State<Dashboard> {
         title: 'Patient Directory',
         value: '${_patients.length} Registered',
         detail: 'Active medical charts',
+        accentColor: const Color(0xFF0284C7),
       ),
       _OverviewMetric(
         icon: Icons.medical_services_outlined,
         title: 'Specialist Staff',
         value: '${_doctors.length} On Duty',
         detail: 'Covering active clinical shifts',
+        accentColor: const Color(0xFF0D9488),
       ),
       _OverviewMetric(
         icon: Icons.calendar_today_outlined,
         title: 'Consultations',
         value: '${_appointments.length} Logged',
         detail: 'Lifetime appointments indexed',
+        accentColor: const Color(0xFF6366F1),
       ),
     ];
 
@@ -843,10 +797,6 @@ class _DashboardState extends State<Dashboard> {
             ),
     );
   }
-
-  // ============================================================
-  // LOADING / ERROR VIEW STATES
-  // ============================================================
 
   Widget _buildLoading(BuildContext context) {
     final theme = Theme.of(context);
@@ -975,10 +925,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  // ============================================================
-  // CLINICAL DRAWER NAVIGATION
-  // ============================================================
-
   Widget _buildDrawer(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -1105,10 +1051,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  // ============================================================
-  // NAVIGATION ROUTING LOGIC
-  // ============================================================
-
   Future<void> _openAddPatient() async {
     final result = await Navigator.push(
       context,
@@ -1191,10 +1133,6 @@ class _DashboardState extends State<Dashboard> {
     _openAppointments();
   }
 
-  // ============================================================
-  // SESSION LOGOUT
-  // ============================================================
-
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
@@ -1213,11 +1151,6 @@ class _DashboardState extends State<Dashboard> {
   }
 }
 
-// ================================================================
-// REUSABLE PRESENTATION WIDGETS
-// ================================================================
-
-/// High-performance animated welcome banner with isolated repaint boundary.
 class _ClinicalWelcomeBanner extends StatefulWidget {
   final bool isMobile;
   final int patientCount;
@@ -1288,7 +1221,6 @@ class _ClinicalWelcomeBannerState extends State<_ClinicalWelcomeBanner>
         borderRadius: BorderRadius.circular(26),
         child: Stack(
           children: [
-            // RepaintBoundary isolates continuous pulse painting from whole tree
             Positioned(
               top: -40,
               right: -30,
@@ -1510,7 +1442,6 @@ class _ClinicalWelcomeBannerState extends State<_ClinicalWelcomeBanner>
   }
 }
 
-/// Generic card container wrapper with standard padding and rounded clinical styling.
 class _ClinicalSectionContainer extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -1598,7 +1529,6 @@ class _ClinicalSectionContainer extends StatelessWidget {
   }
 }
 
-/// Stat metric card displaying primary totals with colored background badge.
 class _StatMetricCard extends StatelessWidget {
   final _StatData data;
 
@@ -1676,50 +1606,79 @@ class _StatMetricCard extends StatelessWidget {
   }
 }
 
-/// Action tile widget for rapid administrative triggers.
 class _ActionTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color accentColor;
   final VoidCallback onPressed;
 
   const _ActionTile({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.accentColor,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      accentColor.withValues(alpha: 0.12),
+                      accentColor.withValues(alpha: 0.04),
+                    ]
+                  : [accentColor.withValues(alpha: 0.08), Colors.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            border: Border.all(
+              color: accentColor.withValues(alpha: isDark ? 0.35 : 0.25),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: isDark ? 0.10 : 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [accentColor, accentColor.withValues(alpha: 0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, size: 19, color: colors.primary),
+                child: Icon(icon, size: 22, color: Colors.white),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1727,27 +1686,37 @@ class _ActionTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        letterSpacing: -0.2,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                        color: theme.textTheme.bodySmall?.color?.withValues(
-                          alpha: 0.7,
-                        ),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.65)
+                            : Colors.black54,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: theme.iconTheme.color?.withValues(alpha: 0.35),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accentColor.withValues(alpha: isDark ? 0.20 : 0.10),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: accentColor,
+                ),
               ),
             ],
           ),
@@ -1757,7 +1726,6 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-/// Row presentation for individual appointments on the daily schedule.
 class _AppointmentRowCard extends StatelessWidget {
   final String patientName;
   final String doctorName;
@@ -1951,7 +1919,6 @@ class _AppointmentRowCard extends StatelessWidget {
   }
 }
 
-/// Fallback illustration state when no consultations are booked for the day.
 class _EmptyScheduleIllustration extends StatelessWidget {
   final VoidCallback onBookPressed;
 
@@ -1960,55 +1927,105 @@ class _EmptyScheduleIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.6)),
+        color: isDark
+            ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+            : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 62,
+            height: 62,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF6366F1).withValues(alpha: 0.25),
+                  const Color(0xFF0284C7).withValues(alpha: 0.15),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+              ),
             ),
-            child: Icon(
-              Icons.event_available_outlined,
-              size: 28,
-              color: theme.colorScheme.primary,
+            child: const Icon(
+              Icons.event_available_rounded,
+              size: 30,
+              color: Color(0xFF38BDF8),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
             'No Consultations Scheduled Today',
-            style: theme.textTheme.titleSmall?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: 15,
+              fontSize: 16,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'The daily schedule is clear. Book an appointment or check the upcoming calendar ledger.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.75),
+          const SizedBox(height: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Text(
+              'The consultation queue for today is empty. You can register walk-ins or reserve upcoming slots.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withValues(
+                  alpha: 0.75,
+                ),
+                height: 1.4,
+              ),
             ),
           ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: onBookPressed,
-            icon: const Icon(Icons.add_rounded, size: 17),
-            label: const Text('Book Appointment'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          const SizedBox(height: 22),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: onBookPressed,
+              icon: const Icon(
+                Icons.add_rounded,
+                size: 18,
+                color: Colors.white,
+              ),
+              label: const Text(
+                'Book Appointment',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -2018,68 +2035,108 @@ class _EmptyScheduleIllustration extends StatelessWidget {
   }
 }
 
-/// Overview tile for system database aggregates.
 class _OverviewMetric extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
   final String detail;
+  final Color accentColor;
 
   const _OverviewMetric({
     required this.icon,
     required this.title,
     required this.value,
     required this.detail,
+    required this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  accentColor.withValues(alpha: 0.12),
+                  accentColor.withValues(alpha: 0.03),
+                ]
+              : [accentColor.withValues(alpha: 0.08), Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: accentColor.withValues(alpha: isDark ? 0.35 : 0.22),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: isDark ? 0.08 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                colors: [accentColor, accentColor.withValues(alpha: 0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: Icon(icon, size: 20, color: theme.colorScheme.primary),
+            child: Icon(icon, size: 22, color: Colors.white),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    fontSize: 11.5,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black54,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: const TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   detail,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 10.5,
-                    color: theme.textTheme.bodySmall?.color?.withValues(
-                      alpha: 0.65,
-                    ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : Colors.black45,
                   ),
                 ),
               ],
@@ -2091,7 +2148,6 @@ class _OverviewMetric extends StatelessWidget {
   }
 }
 
-/// Drawer navigation tile item.
 class _DrawerNavigationItem extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -2139,7 +2195,6 @@ class _DrawerNavigationItem extends StatelessWidget {
   }
 }
 
-/// Data holder model for dashboard summary statistics[cite: 1].
 class _StatData {
   final String title;
   final String value;
@@ -2155,3 +2210,5 @@ class _StatData {
     required this.color,
   });
 }
+
+
