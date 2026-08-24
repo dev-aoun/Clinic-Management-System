@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
 
   final _usernameController = TextEditingController(text: 'aoun@clinic.com');
-  final _passwordController = TextEditingController(text: 'aoun123!');
+  final _passwordController = TextEditingController(text: 'aoun1');
 
   final FocusNode _usernameFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
